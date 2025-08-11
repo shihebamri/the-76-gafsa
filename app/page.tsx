@@ -63,8 +63,8 @@ function TopBar() {
           </div>
           <div className="flex items-center gap-2">
             <Mail className="h-3.5 w-3.5 text-[#c7a17a]" />
-            <a className="hover:text-white" href="mailto:hello@keofi.example">
-              hello@keofi.example
+            <a className="hover:text-white" href="mailto:contact@76.com">
+              contact@76.com
             </a>
           </div>
         </div>
@@ -190,7 +190,7 @@ function HeroSection() {
     <section className="relative min-h-screen flex items-center justify-center">
       <div className="absolute inset-0">
         <video
-          src="/Hero.mp4"
+          src="/76/Hero.mp4"
           autoPlay
           loop
           muted
