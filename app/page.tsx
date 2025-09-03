@@ -159,7 +159,7 @@ function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-4">
           <SocialIcon
-            url="https://www.instagram.com/cafe_in_gafsa"
+            url="https://www.instagram.com/the.76.gafsa"
             target="_blank"
             bgColor="transparent"
             style={{ height: 30, width: 30 }}
