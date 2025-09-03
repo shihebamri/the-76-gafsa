@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import {
@@ -22,11 +22,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { useState } from "react"
 import FeatureTiles from "@/components/FeatureTiles"
 import GallerySection from "@/components/gallery-section"
 import Reveal from "@/components/reveal"
 import { useToast } from "@/hooks/use-toast"
+import { SocialIcon } from "react-social-icons"
 
 export default function Page() {
   return (
@@ -83,8 +83,60 @@ function TopBar() {
 
 /* Header with navigation */
 function SiteHeader() {
-  "use client"
   const [open, setOpen] = useState(false)
+  const [targetCount, setTargetCount] = useState<number | null>(null)
+  const [currentCount, setCurrentCount] = useState<number>(0)
+  const [error, setError] = useState<string | null>(null)
+
+  async function fetchFollowerCount() {
+    try {
+      const response = await fetch(
+        'https://www.pathsocial.com/wp-admin/admin-ajax.php?action=growth_page_rapid_search&account_handle=the.76.gafsa',
+        {
+          headers: {
+            'Accept': 'application/json',
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch follower count')
+      }
+
+      const data = await response.json()
+
+      if (data.success && data.data) {
+        const followersCount = data.data.followers_count
+        const parsedCount =
+          typeof followersCount === "string"
+            ? parseFloat(followersCount.replace(/[^0-9.]/g, "")) *
+              (followersCount.includes("K")
+                ? 1000
+                : followersCount.includes("M")
+                ? 1000000
+                : 1)
+            : followersCount
+        setTargetCount(parsedCount)
+      } else {
+        throw new Error('Invalid data format')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch follower count')
+    }
+  }
+
+  useEffect(() => {
+    fetchFollowerCount()
+  }, [])
+
+  useEffect(() => {
+    if (targetCount !== null && currentCount < targetCount) {
+      const interval = setInterval(() => {
+        setCurrentCount((prev) => Math.min(prev + Math.ceil(targetCount / 100), targetCount))
+      }, 50)
+      return () => clearInterval(interval)
+    }
+  }, [targetCount, currentCount])
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0e0e10]">
@@ -105,7 +157,23 @@ function SiteHeader() {
           <NavLink href="#contact">Contact</NavLink>
         </nav>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-4">
+          <SocialIcon
+            url="https://www.instagram.com/cafe_in_gafsa"
+            target="_blank"
+            bgColor="transparent"
+            style={{ height: 30, width: 30 }}
+            className="hover:opacity-75"
+          />
+          <span className="text-sm text-zinc-300">
+            {error
+              ? "Error"
+              : targetCount !== null
+              ? currentCount >= 1000
+                ? `${(currentCount / 1000).toFixed(1)}K`
+                : new Intl.NumberFormat().format(currentCount)
+              : "Loading..."}
+          </span>
           <Button
             asChild
             variant="outline"
@@ -427,6 +495,16 @@ function MenuSection() {
 
 /* Contact */
 function ContactSection() {
+  const sendMessageToWhatsApp = async (data) => {
+    const phoneNumber = "+21653400440";
+    const message = `Name: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone}\nMessage: ${data.message}`;
+
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
+
+    // Open WhatsApp URL in a new tab
+    window.open(whatsappUrl, "_blank");
+  };
+
   return (
     <section id="contact" className="border-t border-white/5">
       <div className="mx-auto max-w-7xl px-6 py-20">
@@ -462,7 +540,16 @@ function ContactSection() {
           <Reveal y={14}>
             <Card className="bg-[#111215] border-white/5">
               <CardContent className="p-6 sm:p-8">
-                <form className="grid gap-5">
+                <form
+                  className="grid gap-5"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const form = e.currentTarget;
+                    const data = Object.fromEntries(new FormData(form));
+                    sendMessageToWhatsApp(data);
+                    form.reset();
+                  }}
+                >
                   <div className="grid gap-2">
                     <Label htmlFor="name">Name</Label>
                     <Input
@@ -558,19 +645,44 @@ function ContactSection() {
 /* Reservation (formerly CTA) */
 function ReservationSection() {
   "use client"
+  const [reservationSent, setReservationSent] = useState(false)
   const { toast } = useToast()
   const today = new Date().toISOString().split("T")[0]
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget
     const data = Object.fromEntries(new FormData(form))
-    console.log("Reservation request:", data)
-    toast({
-      title: "Reservation requested",
-      description: "We’ll contact you shortly to confirm your booking.",
-    })
-    form.reset()
+
+    const token = "8444561822:AAGagyXzlvzUbg1iA-2dbkt43FR3GfQErm0"
+    const chatId = "5435317629"
+
+    const message = `Reservation Request:\n\n` +
+      `Name: ${data.name}\n` +
+      `Phone: ${data.phone}\n` +
+      `Email: ${data.email}\n` +
+      `Party Size: ${data.party}\n` +
+      `Date: ${data.date}\n` +
+      `Time: ${data.time}\n` +
+      `Special Requests: ${data.notes || "None"}`
+
+    try {
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+        }),
+      })
+
+      setReservationSent(true)
+      form.reset()
+    } catch (error) {
+      console.error("Failed to send reservation to Telegram:", error)
+    }
   }
 
   return (
@@ -684,6 +796,12 @@ function ReservationSection() {
               <Button className="bg-[#c7a17a] text-black hover:bg-[#b6906b]">Request Reservation</Button>
             </div>
           </form>
+
+          {reservationSent && (
+            <p className="mt-4 text-sm text-green-500 text-center">
+              Your reservation has been sent successfully.
+            </p>
+          )}
         </Reveal>
       </div>
     </section>
