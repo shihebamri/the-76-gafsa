@@ -302,12 +302,22 @@ function HeroSection() {
           delay={240}
           className="mt-8 flex flex-wrap gap-3 justify-center"
         >
-          <Button className="bg-[#EDB95E] text-black hover:bg-[#d9a84f]">
+          <Button
+            className="bg-[#EDB95E] text-black hover:bg-[#d9a84f]"
+            onClick={() => {
+              const el = document.querySelector("#menu");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
             Explore Menu
           </Button>
           <Button
             variant="outline"
             className="border-[#EDB95E]/40 text-zinc-100 hover:bg-[#EDB95E] hover:text-black bg-transparent"
+            onClick={() => {
+              const el = document.querySelector("#reservation");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
           >
             Reserve a Table
           </Button>
@@ -535,7 +545,7 @@ function ContactSection() {
           </Reveal>
         </div>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-2 items-start">
+        <div className="mt-10 grid gap-8 lg:grid-cols-2 items-start text-white">
           {/* Contact Form */}
           <Reveal y={14}>
             <Card className="bg-[#111215] border-white/5 text-white">
