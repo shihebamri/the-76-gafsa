@@ -538,7 +538,7 @@ function ContactSection() {
         <div className="mt-10 grid gap-8 lg:grid-cols-2 items-start">
           {/* Contact Form */}
           <Reveal y={14}>
-            <Card className="bg-[#111215] border-white/5">
+            <Card className="bg-[#111215] border-white/5 text-white">
               <CardContent className="p-6 sm:p-8">
                 <form
                   className="grid gap-5"
